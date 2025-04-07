@@ -16,7 +16,7 @@ Currently, the project is in the **redesign phase**, where additional requiremen
 ## Tools and Technologies
 - **Frontend**: ReactJS
 - **Backend**: Node.js, Express.js
-- **Database**: MySQL, Prisma (ORM)
+- **Database**: MySQL
 
 
 ## Links
