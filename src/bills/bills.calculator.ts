@@ -4,7 +4,7 @@ import {
   CalculationResult,
   Transaction,
 } from 'src/interfaces/calculation.interface';
-import { BADFLAGS } from 'dns';
+
 
 @Injectable()
 export class BillsCalculator {
@@ -95,20 +95,24 @@ export class BillsCalculator {
     debtMatrix: number[][],
     peopleCount: number,
   ): void {
-    for (let i = 0; i < peopleCount; i++) {
-      for (let j = i + 1; j < peopleCount; j++) {
-        if (debtMatrix[i][j] > 0 && debtMatrix[j][i] > 0) {
-          if (debtMatrix[i][j] > debtMatrix[j][i]) {
-            debtMatrix[i][j] -= debtMatrix[j][i];
-            debtMatrix[j][i] = 0;
+    for (let personAIndex = 0; personAIndex < peopleCount; personAIndex++) {
+      for (let personBIndex = personAIndex + 1; personBIndex < peopleCount; personBIndex++) {
+        const debtFromAtoB = debtMatrix[personAIndex][personBIndex];
+        const debtFromBtoA = debtMatrix[personBIndex][personAIndex];
+  
+        if (debtFromAtoB > 0 && debtFromBtoA > 0) {
+          if (debtFromAtoB > debtFromBtoA) {
+            debtMatrix[personAIndex][personBIndex] -= debtFromBtoA;
+            debtMatrix[personBIndex][personAIndex] = 0;
           } else {
-            debtMatrix[j][i] -= debtMatrix[i][j];
-            debtMatrix[i][j] = 0;
+            debtMatrix[personBIndex][personAIndex] -= debtFromAtoB;
+            debtMatrix[personAIndex][personBIndex] = 0;
           }
         }
       }
     }
   }
+  
 
   //  สร้างรายการโอนเงินจาก debt matrix
   private createTransactions(
@@ -131,22 +135,22 @@ export class BillsCalculator {
     return transactions;
   }
 
-  // cal  balance per each person
 
+  // cal  balance per each person
   private calculateBalances(
     debtMatrix: number[][],
     peopleCount: number,
   ): number[] {
-    const balances: number[] = new Array(peopleCount).fill(0);
+    const balances: number[] = new Array(peopleCount).fill(0) //default value is 0
 
-    // debt to pay(-)
+    // คำนวณเงินที่ต้องจ่ายออก (ติดลบ)
     for (let debtorId = 0; debtorId < peopleCount; debtorId++) {
       for (let creditorId = 0; creditorId < peopleCount; creditorId++) {
         balances[debtorId] -= debtMatrix[debtorId][creditorId];
       }
     }
 
-    // debt to receive(+)
+    // คำนวณเงินที่ต้องได้รับ (บวก)
     for (let creditorId = 0; creditorId < peopleCount; creditorId++) {
       for (let debtorId = 0; debtorId < peopleCount; debtorId++) {
         balances[creditorId] += debtMatrix[debtorId][creditorId];
@@ -168,6 +172,7 @@ export class BillsCalculator {
   ): Record<number, string> {
     const averages: Record<number, string> = {};
 
+    // don't want to use name of people in calculation , use "_" instead
     people.forEach((_, personId) => {
       let totalForPerson = 0;
       expenses.forEach((expense, expenseId) => {
